@@ -13,6 +13,7 @@ Site / Project      Alekhya Grande
 
 Admin and PM edit the tree in a simple web page. Every other app only **reads** it and stores the `location_id`.
 
+- **Repo:** https://github.com/ggschaitanya2-ux/alekhyalocations (private) — separate from Alekhya Gate
 - **Live (after setup):** https://loc.150-241-247-25.sslip.io
 - **Stack:** Node 22 + Express, PostgreSQL 16 (same database as Alekhya Gate), single-file frontend `public/index.html`
 - **Logins:** the Gate's `users` table — same usernames and passwords
@@ -101,7 +102,7 @@ Browser apps on another origin must be listed in `CORS_ORIGINS`.
 
 ```bash
 cd /opt/alekhya
-git clone git@github.com:ggschaitanya2-ux/alekhya-locations.git
+git clone https://github.com/ggschaitanya2-ux/alekhyalocations.git alekhya-locations   # same GitHub login/key method the Gate repo uses
 cd alekhya-locations
 bash deploy/setup.sh     # copies DATABASE_URL + JWT_SECRET from the Gate .env, installs service, adds Caddy site
 ```

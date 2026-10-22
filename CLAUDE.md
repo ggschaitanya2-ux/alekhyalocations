@@ -2,6 +2,9 @@
 
 Shared location master (Site › Block › Floor › Flat › Room / Common area / Plot / Villa) for all Lakshmi Alekhya apps. Admin + PM edit; every other app reads and stores `location_id`.
 
+## Repo
+- GitHub `ggschaitanya2-ux/alekhyalocations`, branch `main`. Code changes are made in Claude chat and pushed to `main`; the server only pulls (`deploy/update.sh`). Server Claude Code runs/checks/fixes the server, not parallel code edits.
+
 ## Stack
 - Node 22 + Express (`server.js`, single file), `pg`, `jsonwebtoken`, `bcryptjs`
 - PostgreSQL 16 — **same database as Alekhya Gate** (`alekhya_gate`). Tables: `locations`, `location_types`, `location_audit`, `location_meta`; view `location_paths`
