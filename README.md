@@ -115,7 +115,7 @@ Updates: `bash deploy/update.sh`
 
 | File | Site (code) | What's in it |
 |---|---|---|
-| `seed/alekhya-grand.csv` | Alekhya Grand, Vijayawada (`AGV`) | From the QC app: Floors 1–5, flats 101–506, 17 rooms per flat — 546 locations. Single building, so no tower level (Site › Floor › Flat › Room). Each keeps its QC code (`qc_code`, e.g. `AG-T1-304-POOJA`) and QC room group (`group`). |
+| `seed/alekhya-grand.csv` | Alekhya Grand, Vijayawada (`AGV`) | From the QC app: Floors 1–5, each with flats x01–x06 (17 rooms each) and a Common Area (Corridor 1, Corridor 2) — 561 locations. Single building, so no tower level (Site › Floor › Flat / Common Area › Room). Each keeps its QC code (`qc_code`, e.g. `AG-T1-304-POOJA`) and QC room group (`group`). |
 | `seed/alekhya-grande.csv` | Alekhya Grande, Kogilu Road, Bangalore (`AG`) | **Sample layout** from the demo (Towers A/B, basement + 7 floors × 4 flats, clubhouse) — correct it before any app uses it. |
 | `seed/vuyyuru-layout.csv` | Vuyyuru Layout (`VL`) | Plots 1–146. |
 

@@ -109,6 +109,9 @@ Alekhya Grand › Floor 1 › 106 › Bath 3,room,B3,AG-T1-106-B3,Bathrooms
 Alekhya Grand › Floor 1 › 106 › Bath 4,room,B4,AG-T1-106-B4,Bathrooms
 Alekhya Grand › Floor 1 › 106 › Servant Bath,room,SERV,AG-T1-106-SERV,Bathrooms
 Alekhya Grand › Floor 1 › 106 › Balcony/Utility,room,BAL,AG-T1-106-BAL,Balcony / Utility
+Alekhya Grand › Floor 1 › Common Area,area,CA,,
+Alekhya Grand › Floor 1 › Common Area › Corridor 1,room,COR1,,Common Area
+Alekhya Grand › Floor 1 › Common Area › Corridor 2,room,COR2,,Common Area
 Alekhya Grand › Floor 2,floor,F2,AG-T1-F2,
 Alekhya Grand › Floor 2 › 201,flat,201,AG-T1-201,
 Alekhya Grand › Floor 2 › 201 › Hall,room,HALL,AG-T1-201-HALL,Living Areas
@@ -218,6 +221,9 @@ Alekhya Grand › Floor 2 › 206 › Bath 3,room,B3,AG-T1-206-B3,Bathrooms
 Alekhya Grand › Floor 2 › 206 › Bath 4,room,B4,AG-T1-206-B4,Bathrooms
 Alekhya Grand › Floor 2 › 206 › Servant Bath,room,SERV,AG-T1-206-SERV,Bathrooms
 Alekhya Grand › Floor 2 › 206 › Balcony/Utility,room,BAL,AG-T1-206-BAL,Balcony / Utility
+Alekhya Grand › Floor 2 › Common Area,area,CA,,
+Alekhya Grand › Floor 2 › Common Area › Corridor 1,room,COR1,,Common Area
+Alekhya Grand › Floor 2 › Common Area › Corridor 2,room,COR2,,Common Area
 Alekhya Grand › Floor 3,floor,F3,AG-T1-F3,
 Alekhya Grand › Floor 3 › 301,flat,301,AG-T1-301,
 Alekhya Grand › Floor 3 › 301 › Hall,room,HALL,AG-T1-301-HALL,Living Areas
@@ -327,6 +333,9 @@ Alekhya Grand › Floor 3 › 306 › Bath 3,room,B3,AG-T1-306-B3,Bathrooms
 Alekhya Grand › Floor 3 › 306 › Bath 4,room,B4,AG-T1-306-B4,Bathrooms
 Alekhya Grand › Floor 3 › 306 › Servant Bath,room,SERV,AG-T1-306-SERV,Bathrooms
 Alekhya Grand › Floor 3 › 306 › Balcony/Utility,room,BAL,AG-T1-306-BAL,Balcony / Utility
+Alekhya Grand › Floor 3 › Common Area,area,CA,,
+Alekhya Grand › Floor 3 › Common Area › Corridor 1,room,COR1,,Common Area
+Alekhya Grand › Floor 3 › Common Area › Corridor 2,room,COR2,,Common Area
 Alekhya Grand › Floor 4,floor,F4,AG-T1-F4,
 Alekhya Grand › Floor 4 › 401,flat,401,AG-T1-401,
 Alekhya Grand › Floor 4 › 401 › Hall,room,HALL,AG-T1-401-HALL,Living Areas
@@ -436,6 +445,9 @@ Alekhya Grand › Floor 4 › 406 › Bath 3,room,B3,AG-T1-406-B3,Bathrooms
 Alekhya Grand › Floor 4 › 406 › Bath 4,room,B4,AG-T1-406-B4,Bathrooms
 Alekhya Grand › Floor 4 › 406 › Servant Bath,room,SERV,AG-T1-406-SERV,Bathrooms
 Alekhya Grand › Floor 4 › 406 › Balcony/Utility,room,BAL,AG-T1-406-BAL,Balcony / Utility
+Alekhya Grand › Floor 4 › Common Area,area,CA,,
+Alekhya Grand › Floor 4 › Common Area › Corridor 1,room,COR1,,Common Area
+Alekhya Grand › Floor 4 › Common Area › Corridor 2,room,COR2,,Common Area
 Alekhya Grand › Floor 5,floor,F5,AG-T1-F5,
 Alekhya Grand › Floor 5 › 501,flat,501,AG-T1-501,
 Alekhya Grand › Floor 5 › 501 › Hall,room,HALL,AG-T1-501-HALL,Living Areas
@@ -545,3 +557,6 @@ Alekhya Grand › Floor 5 › 506 › Bath 3,room,B3,AG-T1-506-B3,Bathrooms
 Alekhya Grand › Floor 5 › 506 › Bath 4,room,B4,AG-T1-506-B4,Bathrooms
 Alekhya Grand › Floor 5 › 506 › Servant Bath,room,SERV,AG-T1-506-SERV,Bathrooms
 Alekhya Grand › Floor 5 › 506 › Balcony/Utility,room,BAL,AG-T1-506-BAL,Balcony / Utility
+Alekhya Grand › Floor 5 › Common Area,area,CA,,
+Alekhya Grand › Floor 5 › Common Area › Corridor 1,room,COR1,,Common Area
+Alekhya Grand › Floor 5 › Common Area › Corridor 2,room,COR2,,Common Area
