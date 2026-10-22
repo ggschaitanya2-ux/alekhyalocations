@@ -124,6 +124,9 @@ body.chart main{grid-template-columns:minmax(0,1fr) minmax(320px,400px)}
 .cn .cf .sp{flex:1}
 .cbtn{white-space:nowrap;border:1px solid var(--line);background:var(--panel2);border-radius:99px;font-size:11px;padding:1px 8px;cursor:pointer;color:var(--mute);line-height:18px}
 .cbtn:hover{color:var(--text);border-color:#3a4150}
+.cbtn.del{color:var(--red);border-color:#4b2525;opacity:0;transition:opacity .12s}
+.cn:hover .cbtn.del,.cn.sel .cbtn.del,.cbtn.del:focus{opacity:1}
+@media (hover:none){.cbtn.del{opacity:1}}
 .cbtn.add{color:var(--amber2);border-color:#5a4514;font-weight:700;padding:0 8px;font-size:15px}
 .cn[draggable=true]{cursor:grab}
 .cn.dragging{opacity:.35}
@@ -326,11 +329,22 @@ function renderDetail(id){
       <button class="btn" onclick="openMove(${n.id})">Move…</button>
       <button class="btn" onclick="openDup(${n.id})">Duplicate branch…</button>
       ${n.active?`<button class="btn danger" onclick="setActive(${n.id},false)">Deactivate</button>`:`<button class="btn" onclick="setActive(${n.id},true)">Reactivate</button>`}
-      ${S.user.is_admin?`<button class="btn danger" onclick="delNode(${n.id})" ${n.kids.length?'disabled title="Remove sub-locations first"':''}>Delete</button>`:''}
+      ${S.user.is_admin?`<button class="btn danger" id="delBtn" disabled onclick="delNode(${n.id})">Delete</button>`:''}
       <button class="btn" onclick="openAudit(${n.id})">History</button>
-    </div><div class="hint">Deactivate hides a location (and everything inside it) from the other apps but keeps old records linked. Delete is only for mistakes that nothing uses yet.</div></div>`:''}
+    </div><div class="hint">Deactivate hides a location (and everything inside it) from the other apps but keeps old records linked. Delete is only allowed when no Daybook, QC, Gate or other app data is linked to it or anything inside it${S.user.is_admin?'':' (admin only)'}.</div><div class="hint" id="usageNote"></div></div>`:''}
 
-    <div class="card"><h3>For developers</h3><div class="hint" style="margin:0">location_id <b>${n.id}</b> · site_id <b>${n.site_id}</b> · <code>GET /api/locations?under=${n.id}</code></div></div>`;
+    ${(checkUsage(n.id), '')}<div class="card"><h3>For developers</h3><div class="hint" style="margin:0">location_id <b>${n.id}</b> · site_id <b>${n.site_id}</b> · <code>GET /api/locations?under=${n.id}</code></div></div>`;
+}
+const fmtUsed = used => used.map(u => `${u.table.replace(/_/g,' ')} (${u.count})`).join(', ');
+async function checkUsage(id){
+  if (!S.user.is_admin || !$('delBtn')) return;
+  try {
+    const u = await api(`/api/locations/${id}/usage`);
+    if (S.sel !== id || !$('delBtn')) return;
+    const b = $('delBtn');
+    if (u.can_delete) { b.disabled = false; b.textContent = u.inside ? `Delete (with ${u.inside} empty inside)` : 'Delete'; $('usageNote').textContent = ''; }
+    else { b.disabled = true; b.textContent = 'Delete'; $('usageNote').innerHTML = `<b style="color:var(--amber2)">Can't delete:</b> data linked in ${esc(fmtUsed(u.used))}. Use Deactivate.`; }
+  } catch {}
 }
 function metaRow(k,v,ed){ return `<div class="meta-row"><input class="mk" value="${esc(k)}" placeholder="field" ${ed?'':'disabled'}><input class="mv" value="${esc(typeof v==='object'?JSON.stringify(v):v)}" placeholder="value" ${ed?'':'disabled'}>${ed?'<button class="btn sm" onclick="this.parentNode.remove()">✕</button>':'<span></span>'}</div>`; }
 
@@ -344,18 +358,36 @@ const moveSib = run(async (pid, i, d) => {
   const ids = S.byId.get(pid).kids.map(k=>k.id); [ids[i], ids[i+d]] = [ids[i+d], ids[i]];
   await api('/api/locations/reorder', { method:'POST', body:{ ids } }); await load();
 });
-const setActive = run(async (id, on) => {
+const setActive = run(async (id, on, confirmed) => {
   const n = S.byId.get(id);
-  if (!on && !confirm(`Deactivate "${n.name}"${n.kids.length?' and everything inside it':''}? It will disappear from Daybook, QC and other apps' pickers.`)) return;
+  if (!on && !confirmed && !await ask(`Deactivate "${n.name}"${n.kids.length?' and everything inside it':''}? It will disappear from Daybook, QC and other apps' pickers.`)) return;
   await api('/api/locations/'+id, { method:'PATCH', body:{ active:on } });
   if (!on && !$('showOff').checked) S.sel = n.parent_id;
   toast(on?'Reactivated':'Deactivated'); await load();
 });
 const delNode = run(async id => {
   const n = S.byId.get(id);
-  if (!confirm(`Permanently delete "${n.name}"? This cannot be undone.`)) return;
-  await api('/api/locations/'+id, { method:'DELETE' }); S.sel = n.parent_id; toast('Deleted'); await load();
+  const u = await api(`/api/locations/${id}/usage`);
+  if (!u.can_delete) {
+    if (await ask(`"${n.name}" can't be deleted because data is linked to it or to something inside it: ${fmtUsed(u.used)}. You can deactivate it instead — it will be hidden from new entries and old records stay intact.`, 'Deactivate instead', "Can't delete"))
+      await setActive(id, false, true);
+    return;
+  }
+  const inside = u.inside;
+  const msg = inside
+    ? `Permanently delete "${n.name}" and the ${inside} empty location${inside>1?'s':''} inside it? No app data is linked to any of them. This cannot be undone.`
+    : `Permanently delete "${n.name}"? No app data is linked to it. This cannot be undone.`;
+  if (!await ask(msg, 'Delete', 'Delete location')) return;
+  const r = await api('/api/locations/'+id+(inside?'?with_children=1':''), { method:'DELETE' });
+  if (S.sel === id || S.byId.get(S.sel)?.path_ids.includes(id)) S.sel = n.parent_id;
+  toast(`Deleted ${r.deleted} location${r.deleted>1?'s':''}`); await load();
 });
+// In-page confirmation (browser confirm() is blocked in some app views)
+function ask(msg, yes, title){ return new Promise(res => {
+  dialogOpen(title || 'Please confirm', `<p style="margin:14px 0">${esc(msg)}</p>`, `<button class="btn" id="askNo">Cancel</button><button class="btn pri" id="askYes">${esc(yes||'Yes, go ahead')}</button>`);
+  $('askNo').onclick = () => { dlg.close(); res(false); }; $('askYes').onclick = () => { dlg.close(); res(true); };
+  dlg.addEventListener('close', () => res(false), { once: true });
+}); }
 
 // ---------- dialogs ----------
 function dialogOpen(title, body, foot){ $('dlgT').textContent=title; $('dlgB').innerHTML=body; $('dlgF').innerHTML=foot||''; dlg.showModal(); }
@@ -578,6 +610,7 @@ function renderChart(){
       <div class="ct" style="color:${esc(t.color)}">${esc(t.label.split(' /')[0])}</div>
       <div class="cnm" title="${esc(n.path_name)}">${esc(n.name)}</div>${n.code?`<div class="ccd">${esc(n.code)}</div>`:''}
       ${(nk || ed) ? `<div class="cf">${nk?`<button class="cbtn" onclick="event.stopPropagation();ctog(${n.id})">${open?'▾':'▸'} ${kidLabel}</button>`:''}<span class="sp"></span>
+        ${S.user.is_admin && !isRoot?`<button class="cbtn del" title="Delete ${esc(n.name)}" onclick="event.stopPropagation();delNode(${n.id})">✕</button>`:''}
         ${ed?`<button class="cbtn add" title="Add inside ${esc(n.name)}" onclick="event.stopPropagation();startAdd(${n.id})">+</button>`:''}</div>`:''}
     </div>`;
   };

@@ -288,18 +288,62 @@ app.post('/api/locations/reorder', need('edit'), wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
-// ---- write: hard delete (admin, empty nodes only) ----
+// ---- usage: is any app's data linked to this location or anything inside it? ----
+// Every table in the database with a foreign key to locations(id) is found automatically
+// (Daybook entries, QC checks, JMR bills, gate punches…), so new apps are covered as soon as
+// they add `location_id int REFERENCES locations(id)`.
+async function subtreeIds(c, id) {
+  const r = await c.query(`
+    WITH RECURSIVE t AS (SELECT id, 0 AS depth FROM locations WHERE id = $1
+      UNION ALL SELECT l.id, t.depth + 1 FROM locations l JOIN t ON l.parent_id = t.id)
+    SELECT id FROM t ORDER BY depth DESC`, [id]);
+  return r.rows.map(x => x.id);
+}
+async function usage(c, ids) {
+  const fks = await c.query(`
+    SELECT n.nspname AS schema, cl.relname AS tbl, a.attname AS col
+      FROM pg_constraint k
+      JOIN pg_class cl ON cl.oid = k.conrelid
+      JOIN pg_namespace n ON n.oid = cl.relnamespace
+      JOIN pg_attribute a ON a.attrelid = k.conrelid AND a.attnum = k.conkey[1]
+     WHERE k.contype = 'f' AND k.confrelid = 'locations'::regclass
+       AND array_length(k.conkey, 1) = 1 AND cl.relname <> 'locations'`);
+  const out = [];
+  for (const f of fks.rows) {
+    const r = await c.query(`SELECT count(*)::int n FROM ${ident(f.schema)}.${ident(f.tbl)} WHERE ${ident(f.col)} = ANY($1)`, [ids]);
+    if (r.rows[0].n) out.push({ table: f.tbl, column: f.col, count: r.rows[0].n });
+  }
+  return out;
+}
+app.get('/api/locations/:id/usage', need('read'), wrap(async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const c = await pool.connect();
+  try {
+    await getNode(c, id);
+    const ids = await subtreeIds(c, id);
+    const used = await usage(c, ids);
+    res.json({ inside: ids.length - 1, used, can_delete: used.length === 0 });
+  } finally { c.release(); }
+}));
+
+// ---- write: hard delete (admin) — only when NO app data is linked to it or anything inside ----
+// Empty sub-locations (no records anywhere) are deleted with it when ?with_children=1.
 app.delete('/api/locations/:id', need('admin'), wrap(async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  await tx(async c => {
+  const deleted = await tx(async c => {
     const before = await getNode(c, id);
-    const k = await c.query('SELECT count(*)::int n FROM locations WHERE parent_id=$1', [id]);
-    if (k.rows[0].n) throw new HttpError(400, 'Has sub-locations — delete or move them first, or deactivate instead');
-    try { await c.query('DELETE FROM locations WHERE id=$1', [id]); }
-    catch (e) { if (e.code === '23503') throw new HttpError(409, 'Already used by another app — deactivate it instead'); throw e; }
-    await audit(c, id, 'delete', before, null, req.user.username); await bump(c);
+    const ids = await subtreeIds(c, id);
+    const used = await usage(c, ids);
+    if (used.length)
+      throw new HttpError(409, `Can't delete ${before.name} — it has data in ${used.map(u => `${u.table.replace(/_/g, ' ')} (${u.count})`).join(', ')}. Deactivate it instead.`);
+    if (ids.length > 1 && !req.query.with_children)
+      throw new HttpError(400, `${before.name} has ${ids.length - 1} locations inside — confirm deleting them too`);
+    try { for (const x of ids) await c.query('DELETE FROM locations WHERE id=$1', [x]); }
+    catch (e) { if (e.code === '23503') throw new HttpError(409, 'Data is linked to this location — deactivate it instead'); throw e; }
+    await audit(c, id, 'delete', before, { deleted: ids.length }, req.user.username); await bump(c);
+    return ids.length;
   });
-  res.json({ ok: true });
+  res.json({ ok: true, deleted });
 }));
 
 // ---- bulk generator ----
