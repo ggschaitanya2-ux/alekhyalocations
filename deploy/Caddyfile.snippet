@@ -1,0 +1,6 @@
+# Add to /etc/caddy/Caddyfile, then: sudo systemctl reload caddy
+# sslip.io resolves any sub-name, so this gets its own HTTPS certificate automatically.
+loc.150-241-247-25.sslip.io {
+	encode gzip
+	reverse_proxy 127.0.0.1:3200
+}

@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Alekhya Locations</title>
+<meta name="theme-color" content="#0f1115">
+<style>
+:root{
+  --bg:#0f1115;--panel:#171a21;--panel2:#1e222b;--line:#2a2f3a;--text:#e7e9ee;--mute:#8b93a3;
+  --amber:#f59e0b;--amber2:#fbbf24;--red:#ef4444;--green:#10b981;--blue:#3b82f6;
+  --r:10px;--font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.45 var(--font)}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--amber)}
+label{display:block;font-size:12px;color:var(--mute);margin:10px 0 4px}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:#3a4150}
+.btn.pri{background:var(--amber);border-color:var(--amber);color:#111;font-weight:600}
+.btn.pri:hover{background:var(--amber2)}
+.btn.danger{color:var(--red);border-color:#4b2525}
+.btn.sm{padding:4px 8px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.hide{display:none!important}
+.mute{color:var(--mute)}
+header{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
+header .logo{width:28px;height:28px;border-radius:7px;background:var(--amber);color:#111;display:grid;place-items:center;font-weight:800}
+header h1{font-size:15px;margin:0;font-weight:650}
+header .sp{flex:1}
+.chip{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}
+main{display:grid;grid-template-columns:minmax(300px,420px) 1fr;height:calc(100vh - 53px)}
+#treePane{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.tools{padding:10px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.tools input{flex:1;min-width:140px}
+#tree{overflow:auto;flex:1;padding:6px 0 40px}
+.node{display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;border-left:3px solid transparent;user-select:none}
+.node:hover{background:var(--panel2)}
+.node.sel{background:#2a2412;border-left-color:var(--amber)}
+.node.off{opacity:.45}
+.node .tw{width:16px;text-align:center;color:var(--mute);flex:none}
+.node .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.node .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.node .cd{font-size:11px;color:var(--mute)}
+.node .ct{margin-left:auto;font-size:11px;color:var(--mute)}
+#detail{overflow:auto;padding:18px 22px 60px;min-height:0}
+.crumb{font-size:12px;color:var(--mute);margin-bottom:6px}
+.crumb a{color:var(--mute);text-decoration:none;cursor:pointer}.crumb a:hover{color:var(--amber)}
+.dtitle{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dtitle h2{margin:0;font-size:20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-top:14px}
+.card h3{margin:0 0 6px;font-size:13px;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:8px}
+.card h3 .sp{flex:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0 12px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.kids{width:100%;border-collapse:collapse}
+.kids td{padding:6px 4px;border-top:1px solid var(--line)}
+.kids tr:hover td{background:var(--panel2)}
+.kids .nm{cursor:pointer}
+.tag{font-size:11px;padding:1px 7px;border-radius:99px;color:#fff;display:inline-block}
+.empty{display:grid;place-items:center;height:70%;color:var(--mute);text-align:center}
+.meta-row{display:grid;grid-template-columns:1fr 1.4fr auto;gap:6px;margin-top:6px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#222833;border:1px solid var(--line);padding:10px 16px;border-radius:9px;z-index:50;max-width:90vw}
+.toast.err{border-color:var(--red);color:#fecaca}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:0;width:min(640px,94vw);max-height:90vh}
+dialog::backdrop{background:#000a}
+dialog .dh{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+dialog .dh b{flex:1}
+dialog .db{padding:4px 18px 16px;overflow:auto;max-height:calc(90vh - 120px)}
+dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
+.lvl{border:1px dashed var(--line);border-radius:10px;padding:4px 12px 12px;margin-top:10px}
+.lvl .grid{grid-template-columns:1.2fr .6fr .6fr 1.3fr 1fr}
+.preview{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;font:12px/1.5 ui-monospace,Menlo,monospace;max-height:220px;overflow:auto;white-space:pre}
+.hint{font-size:12px;color:var(--mute);margin-top:6px}
+#login{display:grid;place-items:center;min-height:100vh;padding:16px}
+#login form{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px;width:min(360px,100%)}
+#login h1{margin:8px 0 2px;font-size:20px}
+.back{display:none}
+@media (max-width:820px){
+  main{grid-template-columns:1fr}
+  #detail{position:fixed;inset:53px 0 0 0;background:var(--bg);z-index:4;padding:14px 16px 60px;display:none}
+  body.showDetail #detail{display:block}
+  .back{display:inline-block}
+  .lvl .grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="login" class="hide">
+  <form onsubmit="doLogin(event)">
+    <div class="logo" style="width:40px;height:40px;border-radius:10px;background:var(--amber);color:#111;display:grid;place-items:center;font-weight:800;font-size:18px">L</div>
+    <h1>Alekhya Locations</h1>
+    <div class="mute">Sign in with your Alekhya Gate login</div>
+    <label>Username</label><input id="lu" autocomplete="username" required>
+    <label>Password</label><input id="lp" type="password" autocomplete="current-password" required>
+    <button class="btn pri" style="width:100%;margin-top:16px">Sign in</button>
+    <div id="lerr" class="hint" style="color:var(--red)"></div>
+  </form>
+</div>
+
+<div id="app" class="hide">
+  <header>
+    <div class="logo">L</div><h1>Alekhya Locations</h1>
+    <span class="sp"></span>
+    <span id="roleChip" class="chip"></span>
+    <button class="btn sm editOnly" onclick="openImport()">Import / Export</button>
+    <button class="btn sm adminOnly" onclick="openTypes()">Types</button>
+    <button class="btn sm editOnly" onclick="openAudit()">History</button>
+    <button class="btn sm" onclick="logout()">Sign out</button>
+  </header>
+  <main>
+    <section id="treePane">
+      <div class="tools">
+        <input id="q" placeholder="Search locations…" oninput="renderTree()">
+        <button class="btn pri editOnly" onclick="openAdd(null)">+ Site</button>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;width:100%">
+          <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="checkbox" id="showOff" style="width:auto" onchange="load()"> Show inactive</label>
+          <span style="flex:1"></span>
+          <a class="mute" style="cursor:pointer" onclick="expandAll(true)">Expand all</a> ·
+          <a class="mute" style="cursor:pointer" onclick="expandAll(false)">Collapse</a>
+        </div>
+      </div>
+      <div id="tree"></div>
+    </section>
+    <section id="detail"><div class="empty"><div>Select a location<br><span class="hint">or add a site to begin</span></div></div></section>
+  </main>
+</div>
+
+<dialog id="dlg"><div class="dh"><b id="dlgT"></b><button class="btn sm" onclick="dlg.close()">✕</button></div><div class="db" id="dlgB"></div><div class="df" id="dlgF"></div></dialog>
+
+<script>
+'use strict';
+const S = { token: null, user: null, types: [], flat: [], byId: new Map(), open: new Set(), sel: null };
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = { get(k){try{return localStorage.getItem(k)}catch{return null}}, set(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch{}} };
+
+function toast(msg, err){ const t=document.createElement('div'); t.className='toast'+(err?' err':''); t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(), err?4500:2200); }
+
+async function api(path, opts={}){
+  const r = await fetch(path, { method: opts.method||'GET', headers: { 'Content-Type':'application/json', ...(S.token?{Authorization:'Bearer '+S.token}:{}) }, body: opts.body!==undefined ? JSON.stringify(opts.body) : undefined });
+  if (r.status === 401 && path !== '/api/login') { logout(); throw new Error('Session expired — sign in again'); }
+  const ct = r.headers.get('content-type')||'';
+  const data = ct.includes('json') ? await r.json() : await r.text();
+  if (!r.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+const run = fn => async (...a) => { try { return await fn(...a); } catch(e){ toast(e.message, true); } };
+
+// ---------- auth ----------
+async function doLogin(e){
+  e.preventDefault(); $('lerr').textContent='';
+  try {
+    const r = await api('/api/login', { method:'POST', body:{ username:$('lu').value, password:$('lp').value } });
+    S.token = r.token; store.set('alk_loc_token', r.token); await boot();
+  } catch(err){ $('lerr').textContent = err.message; }
+}
+function logout(){ S.token=null; store.set('alk_loc_token', null); $('app').classList.add('hide'); $('login').classList.remove('hide'); }
+async function boot(){
+  S.token = S.token || store.get('alk_loc_token');
+  if (!S.token) return logout();
+  try { S.user = await api('/api/me'); } catch { return logout(); }
+  $('login').classList.add('hide'); $('app').classList.remove('hide');
+  $('roleChip').textContent = (S.user.full_name||S.user.username) + ' · ' + S.user.role + (S.user.can_edit?'':' (view only)');
+  document.querySelectorAll('.editOnly').forEach(el=>el.classList.toggle('hide', !S.user.can_edit));
+  document.querySelectorAll('.adminOnly').forEach(el=>el.classList.toggle('hide', !S.user.is_admin));
+  try { S.open = new Set(JSON.parse(store.get('alk_loc_open')||'[]')); } catch {}
+  await load();
+}
+
+// ---------- data ----------
+const typeOf = c => S.types.find(t=>t.code===c) || { label:c, color:'#64748b' };
+async function load(){
+  const off = $('showOff').checked ? '&include_inactive=1' : '';
+  const [types, flat] = await Promise.all([api('/api/types'), api('/api/locations?x=1'+off)]);
+  S.types = types; S.flat = flat; S.byId = new Map(flat.map(n=>[n.id, {...n, kids:[]}]));
+  for (const n of S.byId.values()) { const p = S.byId.get(n.parent_id); if (p) p.kids.push(n); }
+  renderTree();
+  if (S.sel && S.byId.has(S.sel)) renderDetail(S.sel); else if (S.sel) { S.sel=null; $('detail').innerHTML='<div class="empty">Select a location</div>'; }
+}
+const roots = () => [...S.byId.values()].filter(n=>!S.byId.has(n.parent_id));
+function saveOpen(){ store.set('alk_loc_open', JSON.stringify([...S.open])); }
+function expandAll(on){ S.open = on ? new Set([...S.byId.values()].filter(n=>n.kids.length).map(n=>n.id)) : new Set(); saveOpen(); renderTree(); }
+
+function renderTree(){
+  const q = $('q').value.trim().toLowerCase();
+  const hit = q ? new Set(S.flat.filter(n=>n.path_name.toLowerCase().includes(q)).flatMap(n=>n.path_ids)) : null;
+  const out = [];
+  (function walk(list, depth){
+    for (const n of list){
+      if (hit && !hit.has(n.id)) continue;
+      const open = hit ? true : S.open.has(n.id);
+      const t = typeOf(n.type);
+      out.push(`<div class="node${S.sel===n.id?' sel':''}${n.effective_active?'':' off'}" style="padding-left:${10+depth*16}px" onclick="pick(${n.id})">
+        <span class="tw" onclick="event.stopPropagation();tog(${n.id})">${n.kids.length?(open?'▾':'▸'):''}</span>
+        <span class="dot" style="background:${esc(t.color)}"></span>
+        <span class="nm">${esc(n.name)}</span>${n.code?`<span class="cd">${esc(n.code)}</span>`:''}
+        ${n.kids.length?`<span class="ct">${n.kids.length}</span>`:''}</div>`);
+      if (open) walk(n.kids, depth+1);
+    }
+  })(roots(), 0);
+  $('tree').innerHTML = out.join('') || `<div class="empty" style="height:auto;padding:40px 16px">${q?'No matches':'No locations yet.'+(S.user?.can_edit?'<br><br><button class="btn pri" onclick="openAdd(null)">+ Add first site</button>':'')}</div>`;
+}
+function tog(id){ S.open.has(id)?S.open.delete(id):S.open.add(id); saveOpen(); renderTree(); }
+function pick(id){
+  S.sel = id; const n = S.byId.get(id);
+  n.path_ids.slice(0,-1).forEach(i=>S.open.add(i)); saveOpen();
+  renderTree(); renderDetail(id); document.body.classList.add('showDetail');
+}
+
+// ---------- detail ----------
+function renderDetail(id){
+  const n = S.byId.get(id); if (!n) return;
+  const ed = S.user.can_edit, t = typeOf(n.type);
+  const crumbs = n.path_ids.slice(0,-1).map(i=>S.byId.get(i)).filter(Boolean).map(p=>`<a onclick="pick(${p.id})">${esc(p.name)}</a>`).join(' › ');
+  const metaRows = Object.entries(n.meta||{});
+  const kids = n.kids;
+  $('detail').innerHTML = `
+    <button class="btn sm back" onclick="document.body.classList.remove('showDetail')">← Tree</button>
+    <div class="crumb">${crumbs||'&nbsp;'}</div>
+    <div class="dtitle"><h2>${esc(n.name)}</h2><span class="tag" style="background:${esc(t.color)}">${esc(t.label)}</span>
+      ${n.effective_active?'':'<span class="chip" style="color:var(--red);border-color:#4b2525">Inactive</span>'}
+      <span class="chip">ID ${n.id}</span>${n.path_code?`<span class="chip">${esc(n.path_code)}</span>`:''}</div>
+
+    <div class="card"><h3>Details</h3>
+      <div class="grid">
+        <div><label>Name</label><input id="f_name" value="${esc(n.name)}" ${ed?'':'disabled'}></div>
+        <div><label>Code</label><input id="f_code" value="${esc(n.code)}" ${ed?'':'disabled'} placeholder="e.g. T1, 501"></div>
+        <div><label>Type</label><select id="f_type" ${ed?'':'disabled'}>${S.types.filter(x=>x.active||x.code===n.type).map(x=>`<option value="${esc(x.code)}" ${x.code===n.type?'selected':''}>${esc(x.label)}</option>`).join('')}</select></div>
+        <div><label>Sort order</label><input id="f_sort" type="number" value="${n.sort_order}" ${ed?'':'disabled'}></div>
+      </div>
+      <label>Extra fields <span class="mute">(area, facing, BHK…)</span></label>
+      <div id="metaBox">${metaRows.map(([k,v])=>metaRow(k,v,ed)).join('')}</div>
+      ${ed?`<button class="btn sm" style="margin-top:6px" onclick="$('metaBox').insertAdjacentHTML('beforeend', metaRow('','',true))">+ field</button>
+      <div class="actions"><button class="btn pri" onclick="saveNode(${n.id})">Save changes</button></div>`:''}
+    </div>
+
+    <div class="card"><h3>Inside ${esc(n.name)} <span class="mute" style="text-transform:none">(${kids.length})</span><span class="sp"></span>
+      ${ed?`<button class="btn sm" onclick="openAdd(${n.id})">+ Add one</button><button class="btn sm pri" onclick="openBulk(${n.id})">+ Bulk add</button>`:''}</h3>
+      ${kids.length?`<table class="kids">${kids.map((k,i)=>`<tr>
+        <td style="width:14px"><span class="dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${esc(typeOf(k.type).color)}"></span></td>
+        <td class="nm" onclick="pick(${k.id})" ${k.effective_active?'':'style="opacity:.45"'}>${esc(k.name)} ${k.code?`<span class="mute">· ${esc(k.code)}</span>`:''}</td>
+        <td class="mute" style="font-size:12px">${esc(typeOf(k.type).label)}</td>
+        <td class="mute" style="font-size:12px;text-align:right">${k.kids.length||''}</td>
+        ${ed?`<td style="width:70px;text-align:right"><button class="btn sm" ${i?'':'disabled'} onclick="moveSib(${n.id},${i},-1)">↑</button><button class="btn sm" ${i<kids.length-1?'':'disabled'} onclick="moveSib(${n.id},${i},1)">↓</button></td>`:''}
+      </tr>`).join('')}</table>`:'<div class="hint">Nothing inside yet.</div>'}
+    </div>
+
+    ${ed?`<div class="card"><h3>Actions</h3><div class="actions" style="margin-top:4px">
+      <button class="btn" onclick="openMove(${n.id})">Move…</button>
+      <button class="btn" onclick="openDup(${n.id})">Duplicate branch…</button>
+      ${n.active?`<button class="btn danger" onclick="setActive(${n.id},false)">Deactivate</button>`:`<button class="btn" onclick="setActive(${n.id},true)">Reactivate</button>`}
+      ${S.user.is_admin?`<button class="btn danger" onclick="delNode(${n.id})" ${n.kids.length?'disabled title="Remove sub-locations first"':''}>Delete</button>`:''}
+      <button class="btn" onclick="openAudit(${n.id})">History</button>
+    </div><div class="hint">Deactivate hides a location (and everything inside it) from the other apps but keeps old records linked. Delete is only for mistakes that nothing uses yet.</div></div>`:''}
+
+    <div class="card"><h3>For developers</h3><div class="hint" style="margin:0">location_id <b>${n.id}</b> · site_id <b>${n.site_id}</b> · <code>GET /api/locations?under=${n.id}</code></div></div>`;
+}
+function metaRow(k,v,ed){ return `<div class="meta-row"><input class="mk" value="${esc(k)}" placeholder="field" ${ed?'':'disabled'}><input class="mv" value="${esc(typeof v==='object'?JSON.stringify(v):v)}" placeholder="value" ${ed?'':'disabled'}>${ed?'<button class="btn sm" onclick="this.parentNode.remove()">✕</button>':'<span></span>'}</div>`; }
+
+const saveNode = run(async id => {
+  const meta = {};
+  document.querySelectorAll('#metaBox .meta-row').forEach(r=>{ const k=r.querySelector('.mk').value.trim(); if(k) meta[k]=r.querySelector('.mv').value.trim(); });
+  await api('/api/locations/'+id, { method:'PATCH', body:{ name:$('f_name').value, code:$('f_code').value, type:$('f_type').value, sort_order:$('f_sort').value, meta } });
+  toast('Saved'); await load();
+});
+const moveSib = run(async (pid, i, d) => {
+  const ids = S.byId.get(pid).kids.map(k=>k.id); [ids[i], ids[i+d]] = [ids[i+d], ids[i]];
+  await api('/api/locations/reorder', { method:'POST', body:{ ids } }); await load();
+});
+const setActive = run(async (id, on) => {
+  const n = S.byId.get(id);
+  if (!on && !confirm(`Deactivate "${n.name}"${n.kids.length?' and everything inside it':''}? It will disappear from Daybook, QC and other apps' pickers.`)) return;
+  await api('/api/locations/'+id, { method:'PATCH', body:{ active:on } });
+  if (!on && !$('showOff').checked) S.sel = n.parent_id;
+  toast(on?'Reactivated':'Deactivated'); await load();
+});
+const delNode = run(async id => {
+  const n = S.byId.get(id);
+  if (!confirm(`Permanently delete "${n.name}"? This cannot be undone.`)) return;
+  await api('/api/locations/'+id, { method:'DELETE' }); S.sel = n.parent_id; toast('Deleted'); await load();
+});
+
+// ---------- dialogs ----------
+function dialogOpen(title, body, foot){ $('dlgT').textContent=title; $('dlgB').innerHTML=body; $('dlgF').innerHTML=foot||''; dlg.showModal(); }
+function guessChildType(parentId){
+  if (!parentId) return 'site';
+  const p = S.byId.get(parentId);
+  const sib = p?.kids[0]; if (sib) return sib.type;
+  const order = { site:'block', block:'floor', floor:'flat', flat:'room', villa:'room', plot:'area' };
+  return order[p?.type] || 'area';
+}
+const typeOpts = sel => S.types.filter(t=>t.active).map(t=>`<option value="${esc(t.code)}" ${t.code===sel?'selected':''}>${esc(t.label)}</option>`).join('');
+
+function openAdd(parentId){
+  const p = parentId ? S.byId.get(parentId) : null;
+  dialogOpen(p ? 'Add inside '+p.name : 'New site / project', `
+    <div class="grid"><div><label>Name</label><input id="a_name" placeholder="${p?'e.g. Clubhouse, Tower C':'e.g. Alekhya Grande'}"></div>
+    <div><label>Code</label><input id="a_code" placeholder="optional"></div>
+    <div><label>Type</label><select id="a_type">${typeOpts(guessChildType(parentId))}</select></div></div>`,
+    `<button class="btn" onclick="dlg.close()">Cancel</button><button class="btn pri" onclick="doAdd(${parentId})">Add</button>`);
+  setTimeout(()=>$('a_name').focus(), 50);
+}
+const doAdd = run(async parentId => {
+  const n = await api('/api/locations', { method:'POST', body:{ parent_id:parentId, name:$('a_name').value, code:$('a_code').value, type:$('a_type').value } });
+  dlg.close(); if (parentId) S.open.add(parentId); await load(); pick(n.id); toast('Added');
+});
+
+// --- bulk ---
+const PRESETS = {
+  floors_flats: [{type:'floor',from:1,to:7,name:'Floor {n}',code:'F{nn}'},{type:'flat',from:1,to:4,name:'Flat {p}{nn}',code:'{p}{nn}'}],
+  blocks:       [{type:'block',from:1,to:3,name:'Block {A}',code:'{A}'}],
+  floors:       [{type:'floor',from:1,to:7,name:'Floor {n}',code:'F{nn}'}],
+  flats:        [{type:'flat',from:1,to:4,name:'Flat {p}{nn}',code:'{p}{nn}'}],
+  plots:        [{type:'plot',from:1,to:50,name:'Plot {n}',code:'P{nnn}'}],
+  rooms:        [{type:'room',from:1,to:1,name:'Living',code:''}],
+};
+function lvlHtml(L,i){ return `<div class="lvl" data-i="${i}"><div class="grid">
+  <div><label>Level ${i+1} type</label><select class="b_type">${typeOpts(L.type)}</select></div>
+  <div><label>From</label><input class="b_from" type="number" value="${L.from}"></div>
+  <div><label>To</label><input class="b_to" type="number" value="${L.to}"></div>
+  <div><label>Name pattern</label><input class="b_name" value="${esc(L.name)}"></div>
+  <div><label>Code pattern</label><input class="b_code" value="${esc(L.code)}"></div></div>
+  <label>Skip numbers <span class="mute">(comma separated, e.g. 13)</span></label><input class="b_skip" value="${esc(L.skip||'')}"></div>`; }
+function openBulk(parentId){
+  S._bulkParent = parentId;
+  const p = parentId ? S.byId.get(parentId) : null;
+  const preset = p?.type==='site' ? 'blocks' : p?.type==='block' ? 'floors_flats' : p?.type==='floor' ? 'flats' : 'floors';
+  dialogOpen('Bulk add inside '+(p?p.name:'top level'), `
+    <label>Start from a preset</label>
+    <select id="b_preset" onchange="setPreset(this.value)">
+      <option value="floors_flats">Floors with flats (e.g. Floor 1–7, 4 flats each)</option>
+      <option value="blocks">Blocks / towers (Block A, B, C…)</option>
+      <option value="floors">Floors only</option><option value="flats">Flats only</option>
+      <option value="plots">Plots (layout)</option><option value="rooms">Single item</option></select>
+    <div id="b_lvls"></div>
+    <div class="actions"><button class="btn sm" onclick="addLvl()">+ add a level below</button><button class="btn sm" onclick="rmLvl()">− remove last level</button></div>
+    <div class="hint">Patterns: <b>{n}</b> number · <b>{nn}</b> 2-digit · <b>{nnn}</b> 3-digit · <b>{A}</b> letter · <b>{p}</b>/<b>{pp}</b> the level above's number. “Flat {p}{nn}” on floor 5 → Flat 501. Existing names are skipped, so it's safe to run again.</div>
+    <label>Preview</label><div class="preview" id="b_prev">…</div>`,
+    `<button class="btn" onclick="dlg.close()">Cancel</button><button class="btn pri" id="b_go" onclick="doBulk(${parentId})">Create</button>`);
+  $('b_preset').value = preset; setPreset(preset);
+  $('dlgB').oninput = () => { clearTimeout(S.pt); S.pt = setTimeout(()=>preview(parentId), 300); };
+}
+function setPreset(k){ $('b_lvls').innerHTML = PRESETS[k].map(lvlHtml).join(''); preview(S._bulkParent); }
+function readLvls(){ return [...document.querySelectorAll('#b_lvls .lvl')].map(d=>({ type:d.querySelector('.b_type').value, from:d.querySelector('.b_from').value, to:d.querySelector('.b_to').value, name:d.querySelector('.b_name').value, code:d.querySelector('.b_code').value, skip:d.querySelector('.b_skip').value })); }
+function addLvl(){ const n=document.querySelectorAll('#b_lvls .lvl').length; if(n>=3) return toast('Max 3 levels', true); $('b_lvls').insertAdjacentHTML('beforeend', lvlHtml({type:'room',from:1,to:3,name:'Room {n}',code:''}, n)); $('dlgB').oninput(); }
+function rmLvl(){ const l=document.querySelectorAll('#b_lvls .lvl'); if(l.length>1){ l[l.length-1].remove(); $('dlgB').oninput(); } }
+async function preview(parentId){
+  try {
+    const r = await api('/api/locations/'+(parentId||'root')+'/generate', { method:'POST', body:{ levels:readLvls(), dry_run:true } });
+    let count=0; const lines=[];
+    (function w(items,d){ for(const it of items){ count++; if(lines.length<120) lines.push('  '.repeat(d)+it.name+(it.code?'  ['+it.code+']':'')); w(it.children,d+1);} })(r.plan,0);
+    $('b_prev').textContent = lines.join('\n') + (count>lines.length?`\n… and ${count-lines.length} more`:'');
+    $('b_go').textContent = `Create ${count}`; $('b_go').disabled=false;
+  } catch(e){ $('b_prev').textContent = '⚠ '+e.message; $('b_go').disabled=true; }
+}
+const doBulk = run(async parentId => {
+  const r = await api('/api/locations/'+(parentId||'root')+'/generate', { method:'POST', body:{ levels:readLvls() } });
+  dlg.close(); if (parentId) S.open.add(parentId); saveOpen(); await load();
+  toast(`Created ${r.created}${r.existing?`, ${r.existing} already existed`:''}`);
+});
+
+// --- move ---
+function openMove(id){
+  const n = S.byId.get(id);
+  const opts = S.flat.filter(x=>!x.path_ids.includes(id) && x.id!==n.parent_id).map(x=>`<option value="${x.id}">${esc(x.path_name)}</option>`).join('');
+  dialogOpen('Move '+n.name, `<label>New parent</label><select id="m_to" size="12" style="height:auto"><option value="">— Top level (becomes a site) —</option>${opts}</select>
+    <div class="hint">Everything inside ${esc(n.name)} moves with it. Location IDs don't change, so other apps' records stay linked.</div>`,
+    `<button class="btn" onclick="dlg.close()">Cancel</button><button class="btn pri" onclick="doMove(${id})">Move</button>`);
+}
+const doMove = run(async id => {
+  const to = $('m_to').value; await api(`/api/locations/${id}/move`, { method:'POST', body:{ parent_id: to?+to:null } });
+  dlg.close(); if (to) S.open.add(+to); await load(); pick(id); toast('Moved');
+});
+
+// --- duplicate ---
+function openDup(id){
+  const n = S.byId.get(id);
+  dialogOpen('Duplicate '+n.name, `<div class="grid"><div><label>New name</label><input id="d_name" value="${esc(n.name)} (copy)"></div><div><label>New code</label><input id="d_code" value="${esc(n.code)}"></div></div>
+    <div class="grid"><div><label>Find in child names/codes</label><input id="d_find" placeholder="e.g. A"></div><div><label>Replace with</label><input id="d_rep" placeholder="e.g. B"></div></div>
+    <div class="hint">Copies the whole branch (all active floors, flats, rooms). Use find/replace to turn “A-501” into “B-501”.</div>`,
+    `<button class="btn" onclick="dlg.close()">Cancel</button><button class="btn pri" onclick="doDup(${id})">Duplicate</button>`);
+}
+const doDup = run(async id => {
+  const r = await api(`/api/locations/${id}/duplicate`, { method:'POST', body:{ name:$('d_name').value, code:$('d_code').value, find:$('d_find').value, replace:$('d_rep').value } });
+  dlg.close(); await load(); pick(r.id); toast(`Copied ${r.count} locations`);
+});
+
+// --- import / export ---
+function openImport(){
+  const sites = roots().map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  dialogOpen('Import / Export', `
+    <label>Export to CSV (opens in Excel)</label>
+    <div style="display:flex;gap:6px"><select id="x_site"><option value="">All sites</option>${sites}</select><button class="btn" onclick="doExport()">Download</button></div>
+    <label style="margin-top:18px">Import CSV — columns: <b>path</b>, type, code</label>
+    <input type="file" accept=".csv,text/csv" onchange="this.files[0]&&this.files[0].text().then(t=>$('i_csv').value=t)">
+    <textarea id="i_csv" rows="8" style="margin-top:6px;font:12px ui-monospace,monospace" placeholder="path,type,code&#10;Alekhya Grande › Tower 1 › Floor 1 › Flat 101,flat,101"></textarea>
+    <div class="hint">Use › or &gt; between levels. Missing parents are created. Existing locations are matched by name and only type/code are updated. Always check first.</div>
+    <div class="preview hide" id="i_log" style="margin-top:8px"></div>`,
+    `<button class="btn" onclick="doImport(true)">Check</button><button class="btn pri" onclick="doImport(false)">Import</button>`);
+}
+const doExport = run(async () => {
+  const s = $('x_site').value;
+  const r = await fetch('/api/export.csv'+(s?'?site_id='+s:''), { headers:{ Authorization:'Bearer '+S.token } });
+  if (!r.ok) throw new Error('Export failed');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = 'alekhya-locations.csv'; a.click();
+});
+const doImport = run(async dry => {
+  const r = await api('/api/import', { method:'POST', body:{ csv:$('i_csv').value, dry_run:dry } });
+  $('i_log').classList.remove('hide');
+  $('i_log').textContent = `${dry?'CHECK ONLY — nothing saved\n':'Imported\n'}${r.created} new, ${r.updated} updated\n\n` + r.log.slice(0,200).join('\n');
+  if (!dry) await load();
+});
+
+// --- types (admin) ---
+function openTypes(){
+  dialogOpen('Location types', `<div class="hint">Types are the kinds of places (Site, Tower, Floor, Flat, Villa, Plot, Room…). Codes are used by other apps — don't rename a code once in use; change the label instead.</div>
+    <table class="kids" style="margin-top:8px">${S.types.map(t=>typeRow(t)).join('')}</table>
+    <div class="grid" style="margin-top:12px"><div><label>New code</label><input id="t_code" placeholder="e.g. basement"></div><div><label>Label</label><input id="t_label" placeholder="Basement / Cellar"></div><div><label>Order</label><input id="t_sort" type="number" value="35"></div><div><label>Colour</label><input id="t_color" type="color" value="#64748b" style="padding:2px;height:38px"></div></div>`,
+    `<button class="btn" onclick="dlg.close()">Close</button><button class="btn pri" onclick="saveType()">Add type</button>`);
+}
+function typeRow(t){ return `<tr><td><span class="tag" style="background:${esc(t.color)}">${esc(t.code)}</span></td>
+  <td><input value="${esc(t.label)}" onchange="saveType('${esc(t.code)}', {label:this.value})"></td>
+  <td style="width:80px"><input type="number" value="${t.sort_order}" onchange="saveType('${esc(t.code)}', {sort_order:this.value})"></td>
+  <td style="width:90px"><label style="margin:0;display:flex;gap:4px;align-items:center"><input type="checkbox" style="width:auto" ${t.active?'checked':''} onchange="saveType('${esc(t.code)}', {active:this.checked})"> on</label></td></tr>`; }
+const saveType = run(async (code, patch) => {
+  let body;
+  if (code) { const t = S.types.find(x=>x.code===code); body = { ...t, ...patch }; }
+  else { code = $('t_code').value.trim().toLowerCase(); body = { label:$('t_label').value, sort_order:$('t_sort').value, color:$('t_color').value, active:true }; }
+  await api('/api/types/'+encodeURIComponent(code), { method:'PUT', body });
+  S.types = await api('/api/types'); toast('Type saved'); if (!patch) openTypes(); renderTree();
+});
+
+// --- audit ---
+const openAudit = run(async id => {
+  const rows = await api('/api/audit?limit=150'+(id?'&location_id='+id:''));
+  const fmt = d => new Date(d).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+  const what = r => {
+    if (r.action==='update' && r.before && r.after) {
+      const ch = ['name','code','type','sort_order'].filter(k=>r.before[k]!==r.after[k]).map(k=>`${k}: ${r.before[k]} → ${r.after[k]}`);
+      if (JSON.stringify(r.before.meta)!==JSON.stringify(r.after.meta)) ch.push('extra fields');
+      return ch.join(', ') || 'saved';
+    }
+    if (r.action==='bulk') return `bulk add: ${r.after?.created} created`;
+    if (r.action==='import') return `import: ${r.after?.created} new, ${r.after?.updated} updated`;
+    if (r.action==='duplicate') return `copied ${r.after?.count} locations`;
+    if (r.action==='type') return `type ${r.after?.code} → ${r.after?.label}`;
+    return '';
+  };
+  dialogOpen(id ? 'History — '+S.byId.get(id)?.name : 'Recent changes', rows.length ? `<table class="kids">${rows.map(r=>`<tr><td class="mute" style="font-size:12px;white-space:nowrap">${fmt(r.at)}</td><td><b>${esc(r.action)}</b> ${esc(r.path_name||r.before?.name||'')}<div class="hint" style="margin:0">${esc(what(r))}</div></td><td class="mute" style="font-size:12px">${esc(r.username)}</td></tr>`).join('')}</table>` : '<div class="hint">No changes recorded yet.</div>');
+});
+
+boot();
+</script>
+</body>
+</html>

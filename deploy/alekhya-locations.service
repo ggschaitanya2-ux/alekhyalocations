@@ -1,0 +1,15 @@
+[Unit]
+Description=Alekhya Locations (shared location tree API)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/alekhya/alekhya-locations
+EnvironmentFile=/opt/alekhya/alekhya-locations/.env
+ExecStart=/usr/bin/env node server.js
+Restart=always
+RestartSec=3
+User=alekhya
+
+[Install]
+WantedBy=multi-user.target
