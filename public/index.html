@@ -90,10 +90,10 @@ dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8
 .viewtog{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .viewtog button{background:none;border:0;padding:6px 12px;cursor:pointer;color:var(--mute)}
 .viewtog button.on{background:var(--amber);color:#111;font-weight:600}
-#chartPane{display:none;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
+#chartPane{display:none;flex-direction:column;min-height:0;min-width:0;border-right:1px solid var(--line)}
 body.chart #treePane{display:none}
 body.chart #chartPane{display:flex}
-body.chart main{grid-template-columns:1fr minmax(320px,400px)}
+body.chart main{grid-template-columns:minmax(0,1fr) minmax(320px,400px)}
 .ctools{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line)}
 .sitechip{background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:5px 12px;cursor:pointer}
 .sitechip.on{border-color:var(--amber);color:var(--amber2)}
@@ -136,7 +136,7 @@ body.chart main{grid-template-columns:1fr minmax(320px,400px)}
 .addcard .row{display:flex;gap:5px}
 .addcard .hint{margin-top:5px;font-size:11px}
 .chelp{font-size:12px;color:var(--mute)}
-@media (max-width:820px){ body.chart main{grid-template-columns:1fr} .chelp{display:none} }
+@media (max-width:820px){ body.chart main{grid-template-columns:minmax(0,1fr)} .chelp{display:none} }
 </style>
 </head>
 <body>
