@@ -65,12 +65,13 @@ ALTER TABLE daybook_entries ADD COLUMN location_id int REFERENCES locations(id);
 SELECT id, path_name, path_code FROM location_paths
  WHERE site_id = 1 AND type = 'flat' AND effective_active ORDER BY sort_key;
 
--- roll up anything to tower level
-SELECT b.name AS tower, sum(d.qty)
+-- roll up anything to floor level (pick the ancestor by TYPE, not by position:
+-- sites differ — Alekhya Grand has no tower level, Grande has towers)
+SELECT f.name AS floor, sum(d.qty)
   FROM daybook_entries d
   JOIN location_paths lp ON lp.id = d.location_id
-  JOIN locations b ON b.id = lp.path_ids[2]      -- [1]=site, [2]=block, [3]=floor, [4]=flat
- GROUP BY b.name;
+  JOIN locations f ON f.id = ANY(lp.path_ids) AND f.type = 'floor'
+ GROUP BY f.name, f.sort_order ORDER BY f.sort_order;
 ```
 
 `location_paths` (view) columns: `id, parent_id, type, code, name, sort_order, active, effective_active, meta, site_id, depth, path_name, path_code, path_ids, sort_key`.
@@ -114,7 +115,7 @@ Updates: `bash deploy/update.sh`
 
 | File | Site (code) | What's in it |
 |---|---|---|
-| `seed/alekhya-grand.csv` | Alekhya Grand, Vijayawada (`AGV`) | From the QC app: Tower 1, Floors 1–5, flats 101–506, 17 rooms per flat — 547 locations. Each keeps its QC code (`qc_code`) and QC room group (`group`). |
+| `seed/alekhya-grand.csv` | Alekhya Grand, Vijayawada (`AGV`) | From the QC app: Floors 1–5, flats 101–506, 17 rooms per flat — 546 locations. Single building, so no tower level (Site › Floor › Flat › Room). Each keeps its QC code (`qc_code`, e.g. `AG-T1-304-POOJA`) and QC room group (`group`). |
 | `seed/alekhya-grande.csv` | Alekhya Grande, Kogilu Road, Bangalore (`AG`) | **Sample layout** from the demo (Towers A/B, basement + 7 floors × 4 flats, clubhouse) — correct it before any app uses it. |
 | `seed/vuyyuru-layout.csv` | Vuyyuru Layout (`VL`) | Plots 1–146. |
 
