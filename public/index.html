@@ -598,7 +598,7 @@ function renderChart(){
   const sites = roots();
   if (!S.site || !S.byId.has(S.site)) S.site = sites[0]?.id ?? null;
   if (S.copenFresh && S.site) { S.copenFresh = false; chartLevels(1); return; }
-  $('siteChips').innerHTML = sites.map(s => `<button class="sitechip${s.id===S.site?' on':''}" onclick="S.site=${s.id};renderChart()">${esc(s.name)}</button>`).join('');
+  $('siteChips').innerHTML = sites.map(s => `<button class="sitechip${s.id===S.site?' on':''}" onclick="selectSite(${s.id})">${esc(s.name)}</button>`).join('');
   const site = S.byId.get(S.site);
   $('oc').style.zoom = S.zoom;
   if (!site) { $('oc').innerHTML = `<div class="empty" style="height:auto;padding:60px 0">No sites yet.${S.user.can_edit?'<br><br><button class="btn pri" onclick="openAdd(null)">+ Add first site</button>':''}</div>`; return; }
@@ -642,6 +642,7 @@ function keepVisible(el, center){
   if (center || r.left < wr.left || r.right > wr.right) w.scrollLeft += (r.left + r.width/2) - (wr.left + wr.width/2);
   if (r.bottom > wr.bottom - 20) w.scrollTop += r.bottom - wr.bottom + 60;
 }
+function selectSite(id){ S.site = id; if (!S.copen.has(id)) { chartLevels(1); return; } renderChart(); }
 function ctog(id){ S.copen.has(id) ? S.copen.delete(id) : S.copen.add(id); saveCopen(); renderChart(); }
 function startAdd(pid){ S.adding = pid; S.addDraft = null; S.copen.add(pid); saveCopen(); renderChart(); }
 function acKey(e, pid){ if (e.key === 'Enter') { e.preventDefault(); saveAdd(pid); } if (e.key === 'Escape') { S.adding = null; renderChart(); } }
