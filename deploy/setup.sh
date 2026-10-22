@@ -24,9 +24,9 @@ fi
 npm ci --omit=dev
 npm run migrate
 
-# First install only: load Alekhya Grand (from the QC app) if the location list is empty
+# First install only: load the starting sites (seed/*.csv) if the location list is empty
 if [ "$(node -e "require('dotenv').config();const{Pool}=require('pg');const p=new Pool({connectionString:process.env.DATABASE_URL});p.query('select count(*)::int n from locations').then(r=>{console.log(r.rows[0].n);p.end()})")" = "0" ]; then
-  node scripts/seed.js seed/alekhya-grand.csv
+  for f in seed/alekhya-grand.csv seed/alekhya-grande.csv seed/vuyyuru-layout.csv; do node scripts/seed.js "$f"; done
 fi
 
 # Run as the same user that owns the Gate folder
