@@ -496,6 +496,9 @@ app.post('/api/import', need('edit'), wrap(async (req, res) => {
         if (!segs.length) { log.push(`row ${i + 1}: empty path, skipped`); continue; }
         const type = get('type') || null;
         if (type && !types.has(type)) throw new HttpError(400, `row ${i + 1}: unknown type "${type}"`);
+        // any other column (qc_code, group, area_sqft…) goes into the location's extra fields
+        const meta = {};
+        for (const h of head) if (!['path', 'type', 'code', 'sort_order', 'id', 'active', 'meta'].includes(h) && get(h)) meta[h] = get(h);
         let parentId = null;
         for (let s = 0; s < segs.length; s++) {
           const last = s === segs.length - 1;
@@ -503,10 +506,10 @@ app.post('/api/import', need('edit'), wrap(async (req, res) => {
           if (!node) {
             const t = last ? (type || 'area') : (s === 0 ? 'site' : 'area');
             const ins = await c.query(
-              `INSERT INTO locations (parent_id, type, code, name, sort_order, created_by, updated_by)
-               VALUES ($1,$2,$3,$4,$5,$6,$6) RETURNING *`,
+              `INSERT INTO locations (parent_id, type, code, name, sort_order, created_by, updated_by, meta)
+               VALUES ($1,$2,$3,$4,$5,$6,$6,$7) RETURNING *`,
               [parentId, t, last ? clean(get('code'), 30) : '', segs[s],
-               last && get('sort_order') !== '' ? parseInt(get('sort_order'), 10) || 0 : await nextSort(c, parentId), req.user.username]);
+               last && get('sort_order') !== '' ? parseInt(get('sort_order'), 10) || 0 : await nextSort(c, parentId), req.user.username, last ? meta : {}]);
             node = ins.rows[0]; created++;
             log.push(`row ${i + 1}: + ${segs.slice(0, s + 1).join(' › ')} (${t})`);
           } else if (last && (type && node.type !== type || get('code') && node.code !== get('code'))) {

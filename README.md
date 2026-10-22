@@ -93,4 +93,7 @@ bash deploy/setup.sh     # copies DATABASE_URL + JWT_SECRET from the Gate .env, 
 ```
 
 Updates: `bash deploy/update.sh`
+
+### Starting data
+`seed/alekhya-grand.csv` — **Alekhya Grand (Vijayawada)**, taken from the QC app: Tower 1, Floors 1–5, flats 101–506, 17 rooms per flat (547 locations). Each room keeps the QC app's code (`qc_code`, e.g. `AG-T1-304-POOJA`) and its QC group (`Living Areas` / `Bathrooms` / `Balcony / Utility`) in its extra fields. `setup.sh` loads it on a fresh install; to load by hand: `node scripts/seed.js seed/alekhya-grand.csv` (safe to re-run). Alekhya Grande (Bangalore) is a different project and is not in this file.
 Logs: `journalctl -u alekhya-locations -f`

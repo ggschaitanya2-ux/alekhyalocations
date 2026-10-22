@@ -24,6 +24,11 @@ fi
 npm ci --omit=dev
 npm run migrate
 
+# First install only: load Alekhya Grand (from the QC app) if the location list is empty
+if [ "$(node -e "require('dotenv').config();const{Pool}=require('pg');const p=new Pool({connectionString:process.env.DATABASE_URL});p.query('select count(*)::int n from locations').then(r=>{console.log(r.rows[0].n);p.end()})")" = "0" ]; then
+  node scripts/seed.js seed/alekhya-grand.csv
+fi
+
 # Run as the same user that owns the Gate folder
 OWNER=$(stat -c %U /opt/alekhya/alekhya-gate 2>/dev/null || echo "$USER")
 sed "s/^User=.*/User=$OWNER/" deploy/alekhya-locations.service | sudo tee /etc/systemd/system/alekhya-locations.service >/dev/null
