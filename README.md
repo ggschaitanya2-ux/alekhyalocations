@@ -39,6 +39,17 @@ Roles are set in `.env` (`EDIT_ROLES`, `ADMIN_ROLES`). To use `pm`, give a user 
 - **Extra fields** per location (area_sqft, facing, BHK…) stored as JSON `meta`.
 - **History** — every change is logged with who and when.
 
+## One app per site — how apps are pinned to their site
+
+Each site has its own Daybook, QC, JMR… deployment. Every site has a **unique site code** (Alekhya Grand = `AGV`), and each app deployment is configured with it:
+
+1. In the app's own `.env`: `SITE_CODE=AGV`
+2. Give that deployment its own key here, locked to the site: `API_KEYS=daybook-grand:<key>:AGV`
+3. A site-locked key can only see that site: lists, tree, details and checks never return another site's locations, and asking for another site is refused.
+4. Before saving a record, the app confirms the location is in its site — `GET /api/check?id=<location_id>` (or in SQL `SELECT location_in_site($1, 'AGV')`).
+
+Because `location_id` is unique across all sites, a record can never point at the wrong project, and reports can still be combined across sites later.
+
 ## For the other apps (Daybook, QC, JMR, Gate…)
 
 **Rule: store `location_id` (integer). Never store the name as the key** — names get corrected, IDs don't.
@@ -77,6 +88,9 @@ Auth with **either** the user's Gate JWT (`Authorization: Bearer …`, works bec
 | `GET /api/tree?root=1` | nested tree |
 | `GET /api/locations/:id` | one location + its children |
 | `GET /api/types` | location types |
+| `GET /api/sites` | sites (only its own for a site-locked key) |
+| `GET /api/check?id=123` | `{ok, active, path_name}` — is this location in my site? |
+| `?site=AGV` on any list | limit to one site (automatic for site-locked keys) |
 | `GET /api/version` | `{version}` — increases on every change; cache the tree and re-fetch only when it changes |
 
 Add `include_inactive=1` to see deactivated ones (needed when showing old records).

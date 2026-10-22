@@ -19,9 +19,12 @@ const cfg = {
   usersTable: process.env.USERS_TABLE || 'users',
   usersPasswordCol: process.env.USERS_PASSWORD_COL || 'password_hash',
   corsOrigins: list(process.env.CORS_ORIGINS || ''),
-  // API_KEYS="daybook:longrandomkey,qc:anotherkey"  (read-only access for other apps' servers)
+  // API_KEYS="daybook-grand:longrandomkey:AGV,qc-grand:anotherkey:AGV"
+  // name:key[:SITE_CODE] — read-only keys for other apps' servers. With a site code the key
+  // can only ever see that one site (one Daybook / QC deployment per site).
   apiKeys: Object.fromEntries(list(process.env.API_KEYS || '').map(s => {
-    const i = s.indexOf(':'); return i > 0 ? [s.slice(i + 1), s.slice(0, i)] : [s, 'app'];
+    const [name, key, site] = s.split(':');
+    return key ? [key, { name, site: site || null }] : [name, { name: 'app', site: null }];
   })),
 };
 function list(s) { return String(s).split(',').map(x => x.trim()).filter(Boolean); }
@@ -85,7 +88,7 @@ function clean(s, max = 120) { return String(s ?? '').trim().replace(/\s+/g, ' '
 // ---------- auth ----------
 function authenticate(req) {
   const key = req.get('x-api-key');
-  if (key && cfg.apiKeys[key]) return { username: 'app:' + cfg.apiKeys[key], role: 'app', app: true };
+  if (key && cfg.apiKeys[key]) { const k = cfg.apiKeys[key]; return { username: 'app:' + k.name, role: 'app', app: true, site: k.site }; }
   const h = req.get('authorization') || '';
   const token = h.startsWith('Bearer ') ? h.slice(7) : null;
   if (!token) return null;
@@ -104,6 +107,25 @@ function need(level) {
     if (level === 'admin' && !isAdmin(u)) return res.status(403).json({ error: 'Admin only' });
     req.user = u; next();
   };
+}
+
+// ---------- site scope ----------
+// ?site=AGV (site code) limits a request to one site. A site-locked API key always applies its
+// own site and is refused anything outside it.
+async function siteScope(req) {
+  const want = req.user.site || req.query.site || null;
+  if (req.user.site && req.query.site && req.query.site.toLowerCase() !== req.user.site.toLowerCase())
+    throw new HttpError(403, `This key is for site ${req.user.site} only`);
+  if (!want) return null;
+  const r = await pool.query('SELECT id FROM locations WHERE parent_id IS NULL AND lower(code) = lower($1)', [want]);
+  if (!r.rows[0]) throw new HttpError(404, `No site with code "${want}"`);
+  return r.rows[0].id;
+}
+async function assertInScope(req, id) {
+  const site = await siteScope(req);
+  if (!site) return;
+  const r = await pool.query('SELECT site_id FROM location_paths WHERE id = $1', [id]);
+  if (r.rows[0] && r.rows[0].site_id !== site) throw new HttpError(404, 'Location not found in this site');
 }
 
 // ---------- app ----------
@@ -171,6 +193,8 @@ app.put('/api/types/:code', need('admin'), wrap(async (req, res) => {
 app.get('/api/locations', need('read'), wrap(async (req, res) => {
   const w = [], p = [];
   const add = (sql, v) => { p.push(v); w.push(sql.replace('?', '$' + p.length)); };
+  const scoped = await siteScope(req);
+  if (scoped) add('site_id = ?', scoped);
   if (req.query.site_id) add('site_id = ?', parseInt(req.query.site_id, 10));
   if (req.query.parent_id === 'root') w.push('parent_id IS NULL');
   else if (req.query.parent_id) add('parent_id = ?', parseInt(req.query.parent_id, 10));
@@ -188,7 +212,9 @@ app.get('/api/locations', need('read'), wrap(async (req, res) => {
 // ---- read: nested tree ----
 app.get('/api/tree', need('read'), wrap(async (req, res) => {
   const incl = !!req.query.include_inactive;
-  const root = req.query.root ? parseInt(req.query.root, 10) : null;
+  const scoped = await siteScope(req);
+  const root = req.query.root ? parseInt(req.query.root, 10) : scoped;
+  if (req.query.root) await assertInScope(req, root);
   const r = await pool.query(
     `SELECT id, parent_id, type, code, name, sort_order, active, effective_active, meta, depth, path_name, path_code,
             (SELECT count(*)::int FROM locations k WHERE k.parent_id = lp.id) AS child_count
@@ -204,8 +230,27 @@ app.get('/api/tree', need('read'), wrap(async (req, res) => {
   res.json(root ? roots.filter(n => n.id === root) : roots);
 }));
 
+// ---- sites (each app deployment picks one by code) ----
+app.get('/api/sites', need('read'), wrap(async (req, res) => {
+  const scoped = await siteScope(req);
+  const r = await pool.query(
+    `SELECT id, code, name, active, meta FROM locations WHERE parent_id IS NULL AND ($1::int IS NULL OR id = $1) ORDER BY sort_order, id`, [scoped]);
+  res.json(r.rows);
+}));
+// ---- check before saving: does this location belong to this app's site? ----
+// GET /api/check?site=AGV&id=123  →  { ok: true, path_name: "Alekhya Grand › Tower 1 › Floor 3 › 304" }
+app.get('/api/check', need('read'), wrap(async (req, res) => {
+  const site = req.user.site || req.query.site;
+  if (!site) throw new HttpError(400, 'site code required');
+  const id = parseInt(req.query.id, 10);
+  const r = await pool.query('SELECT location_in_site($1, $2) AS ok', [id, site]);
+  const p = r.rows[0].ok ? (await pool.query('SELECT path_name, effective_active FROM location_paths WHERE id=$1', [id])).rows[0] : null;
+  res.json({ ok: !!r.rows[0].ok, active: !!p?.effective_active, path_name: p?.path_name || null });
+}));
+
 app.get('/api/locations/:id', need('read'), wrap(async (req, res) => {
   const id = parseInt(req.params.id, 10);
+  await assertInScope(req, id);
   const r = await pool.query('SELECT * FROM location_paths WHERE id = $1', [id]);
   if (!r.rows[0]) throw new HttpError(404, 'Location not found');
   const kids = await pool.query('SELECT * FROM locations WHERE parent_id = $1 ORDER BY sort_order, id', [id]);
@@ -317,6 +362,7 @@ async function usage(c, ids) {
 }
 app.get('/api/locations/:id/usage', need('read'), wrap(async (req, res) => {
   const id = parseInt(req.params.id, 10);
+  await assertInScope(req, id);
   const c = await pool.connect();
   try {
     await getNode(c, id);
@@ -462,7 +508,7 @@ function parseCsv(text) {
   return rows.filter(r => r.some(x => x.trim() !== ''));
 }
 app.get('/api/export.csv', need('read'), wrap(async (req, res) => {
-  const site = req.query.site_id ? parseInt(req.query.site_id, 10) : null;
+  const site = (await siteScope(req)) || (req.query.site_id ? parseInt(req.query.site_id, 10) : null);
   const r = await pool.query(
     `SELECT id, path_name, type, code, name, sort_order, active, meta FROM location_paths
       WHERE ($1::int IS NULL OR site_id = $1) ORDER BY sort_key`, [site]);
@@ -546,6 +592,7 @@ app.use(express.static(path.join(__dirname, 'public'), { maxAge: 0 }));
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 app.use((err, req, res, next) => {
   if (err.status) return res.status(err.status).json({ error: err.message });
+  if (err.code === '23505' && err.constraint === 'locations_site_code_uq') return res.status(409).json({ error: 'Another site already uses this code — each site needs its own code (apps are linked to a site by it)' });
   if (err.code === '23505') return res.status(409).json({ error: 'A location with this name already exists at this level' });
   if (err.code === '23503') return res.status(409).json({ error: 'That location is referenced elsewhere' });
   console.error(err);
