@@ -563,7 +563,7 @@ function renderChart(){
   if (S.view !== 'chart' || !S.user) return;
   const sites = roots();
   if (!S.site || !S.byId.has(S.site)) S.site = sites[0]?.id ?? null;
-  if (S.copenFresh && S.site) { S.copenFresh = false; chartLevels(2); return; }
+  if (S.copenFresh && S.site) { S.copenFresh = false; chartLevels(1); return; }
   $('siteChips').innerHTML = sites.map(s => `<button class="sitechip${s.id===S.site?' on':''}" onclick="S.site=${s.id};renderChart()">${esc(s.name)}</button>`).join('');
   const site = S.byId.get(S.site);
   $('oc').style.zoom = S.zoom;
