@@ -9,7 +9,7 @@
 :root{
   --bg:#0f1115;--panel:#171a21;--panel2:#1e222b;--line:#2a2f3a;--text:#e7e9ee;--mute:#8b93a3;
   --amber:#f59e0b;--amber2:#fbbf24;--red:#ef4444;--green:#10b981;--blue:#3b82f6;
-  --r:10px;--font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:10px;--conn:#3b4252;--font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.45 var(--font)}
@@ -85,6 +85,58 @@ dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8
   .back{display:inline-block}
   .lvl .grid{grid-template-columns:1fr 1fr}
 }
+
+/* ---------- chart view (org-chart like the site sketch) ---------- */
+.viewtog{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.viewtog button{background:none;border:0;padding:6px 12px;cursor:pointer;color:var(--mute)}
+.viewtog button.on{background:var(--amber);color:#111;font-weight:600}
+#chartPane{display:none;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
+body.chart #treePane{display:none}
+body.chart #chartPane{display:flex}
+body.chart main{grid-template-columns:1fr minmax(320px,400px)}
+.ctools{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line)}
+.sitechip{background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:5px 12px;cursor:pointer}
+.sitechip.on{border-color:var(--amber);color:var(--amber2)}
+#chartWrap{flex:1;overflow:auto;padding:24px 16px 80px}
+.oc{display:inline-block;min-width:100%;text-align:center}
+.oc ul{display:flex;justify-content:center;margin:0;padding:22px 0 0;position:relative}
+.oc>ul{padding-top:0}
+.oc li{list-style:none;position:relative;padding:22px 5px 0;display:flex;flex-direction:column;align-items:center}
+.oc li::before,.oc li::after{content:'';position:absolute;top:0;right:50%;width:50%;height:22px;border-top:2px solid var(--conn)}
+.oc li::after{right:auto;left:50%;border-left:2px solid var(--conn)}
+.oc li:only-child::before,.oc li:only-child::after{display:none}
+.oc li:only-child{padding-top:0}
+.oc li:first-child::before,.oc li:last-child::after{border:0 none}
+.oc li:last-child::before{border-right:2px solid var(--conn);border-radius:0 8px 0 0}
+.oc li:first-child::after{border-radius:8px 0 0 0}
+.oc ul ul::before{content:'';position:absolute;top:0;left:50%;border-left:2px solid var(--conn);height:22px}
+.oc>ul>li{padding-top:0}.oc>ul>li::before,.oc>ul>li::after{display:none}
+.cn{background:var(--panel);border:1.5px solid var(--line);border-radius:10px;min-width:96px;max-width:170px;padding:7px 10px 6px;text-align:left;cursor:pointer;position:relative;transition:border-color .12s, box-shadow .12s}
+.cn:hover{border-color:#3a4150}
+.cn.sel{border-color:var(--amber);box-shadow:0 0 0 3px #f59e0b33}
+.cn.off{opacity:.45}
+.cn.root{min-width:200px;padding:10px 14px}
+.cn.root .cnm{font-size:16px}
+.cn .ct{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.cn .cnm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cn .ccd{font-size:11px;color:var(--mute)}
+.cn .cf{display:flex;align-items:center;gap:4px;margin-top:5px}
+.cn .cf .sp{flex:1}
+.cbtn{white-space:nowrap;border:1px solid var(--line);background:var(--panel2);border-radius:99px;font-size:11px;padding:1px 8px;cursor:pointer;color:var(--mute);line-height:18px}
+.cbtn:hover{color:var(--text);border-color:#3a4150}
+.cbtn.add{color:var(--amber2);border-color:#5a4514;font-weight:700;padding:0 8px;font-size:15px}
+.cn[draggable=true]{cursor:grab}
+.cn.dragging{opacity:.35}
+.cn.drop-in{border-color:var(--amber);box-shadow:0 0 0 3px #f59e0b55;background:#2a2412}
+.cn.drop-before{box-shadow:-6px 0 0 -1px var(--amber)}
+.cn.drop-after{box-shadow:6px 0 0 -1px var(--amber)}
+.cn input.ren{width:100%;padding:3px 6px;font-weight:600}
+.addcard{background:var(--panel);border:1.5px dashed var(--amber);border-radius:10px;padding:8px;width:190px;text-align:left}
+.addcard input,.addcard select{padding:5px 7px;font-size:13px;margin-top:5px}
+.addcard .row{display:flex;gap:5px}
+.addcard .hint{margin-top:5px;font-size:11px}
+.chelp{font-size:12px;color:var(--mute)}
+@media (max-width:820px){ body.chart main{grid-template-columns:1fr} .chelp{display:none} }
 </style>
 </head>
 <body>
@@ -104,6 +156,7 @@ dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8
 <div id="app" class="hide">
   <header>
     <div class="logo">L</div><h1>Alekhya Locations</h1>
+    <div class="viewtog"><button id="vChart" onclick="setView('chart')">Chart</button><button id="vList" onclick="setView('list')">List</button></div>
     <span class="sp"></span>
     <span id="roleChip" class="chip"></span>
     <button class="btn sm editOnly" onclick="openImport()">Import / Export</button>
@@ -125,6 +178,19 @@ dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8
       </div>
       <div id="tree"></div>
     </section>
+    <section id="chartPane">
+      <div class="ctools">
+        <div id="siteChips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        <button class="btn sm pri editOnly" onclick="openAdd(null)">+ Site</button>
+        <span style="flex:1"></span>
+        <span class="chelp editOnly">Drag a box onto another to move it inside · drop on a box's left/right edge to reorder · double-click to rename</span>
+        <button class="btn sm" onclick="chartLevels(1)">Towers</button>
+        <button class="btn sm" onclick="chartLevels(2)">Floors</button>
+        <button class="btn sm" onclick="chartLevels(9)">All</button>
+        <button class="btn sm" onclick="zoom(-0.1)">−</button><button class="btn sm" onclick="zoom(0.1)">+</button>
+      </div>
+      <div id="chartWrap"><div class="oc" id="oc"></div></div>
+    </section>
     <section id="detail"><div class="empty"><div>Select a location<br><span class="hint">or add a site to begin</span></div></div></section>
   </main>
 </div>
@@ -133,7 +199,7 @@ dialog .df{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8
 
 <script>
 'use strict';
-const S = { token: null, user: null, types: [], flat: [], byId: new Map(), open: new Set(), sel: null };
+const S = { token: null, user: null, types: [], flat: [], byId: new Map(), open: new Set(), sel: null, copen: new Set(), site: null, adding: null, drag: null, zoom: 1, view: 'chart' };
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const store = { get(k){try{return localStorage.getItem(k)}catch{return null}}, set(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch{}} };
@@ -168,6 +234,9 @@ async function boot(){
   document.querySelectorAll('.editOnly').forEach(el=>el.classList.toggle('hide', !S.user.can_edit));
   document.querySelectorAll('.adminOnly').forEach(el=>el.classList.toggle('hide', !S.user.is_admin));
   try { S.open = new Set(JSON.parse(store.get('alk_loc_open')||'[]')); } catch {}
+  try { const c = JSON.parse(store.get('alk_loc_copen')||'null'); if (c) S.copen = new Set(c); else S.copenFresh = true; } catch { S.copenFresh = true; }
+  S.view = store.get('alk_loc_view') || 'chart'; S.zoom = +(store.get('alk_loc_zoom')||1) || 1;
+  setView(S.view, true);
   await load();
 }
 
@@ -178,7 +247,7 @@ async function load(){
   const [types, flat] = await Promise.all([api('/api/types'), api('/api/locations?x=1'+off)]);
   S.types = types; S.flat = flat; S.byId = new Map(flat.map(n=>[n.id, {...n, kids:[]}]));
   for (const n of S.byId.values()) { const p = S.byId.get(n.parent_id); if (p) p.kids.push(n); }
-  renderTree();
+  renderTree(); renderChart();
   if (S.sel && S.byId.has(S.sel)) renderDetail(S.sel); else if (S.sel) { S.sel=null; $('detail').innerHTML='<div class="empty">Select a location</div>'; }
 }
 const roots = () => [...S.byId.values()].filter(n=>!S.byId.has(n.parent_id));
@@ -207,7 +276,11 @@ function renderTree(){
 function tog(id){ S.open.has(id)?S.open.delete(id):S.open.add(id); saveOpen(); renderTree(); }
 function pick(id){
   S.sel = id; const n = S.byId.get(id);
-  n.path_ids.slice(0,-1).forEach(i=>S.open.add(i)); saveOpen();
+  n.path_ids.forEach(i=>S.open.add(i)); saveOpen();
+  const r = n.path_ids[0];
+  const visible = S.view === 'chart' && r === S.site && document.querySelector(`#oc .cn[data-id="${id}"]`);
+  if (visible) { document.querySelectorAll('#oc .cn.sel').forEach(c=>c.classList.remove('sel')); visible.classList.add('sel'); }
+  else { S.site = r; n.path_ids.slice(0,-1).forEach(i=>S.copen.add(i)); saveCopen(); renderChart(); }
   renderTree(); renderDetail(id); document.body.classList.add('showDetail');
 }
 
@@ -451,6 +524,142 @@ const openAudit = run(async id => {
     return '';
   };
   dialogOpen(id ? 'History — '+S.byId.get(id)?.name : 'Recent changes', rows.length ? `<table class="kids">${rows.map(r=>`<tr><td class="mute" style="font-size:12px;white-space:nowrap">${fmt(r.at)}</td><td><b>${esc(r.action)}</b> ${esc(r.path_name||r.before?.name||'')}<div class="hint" style="margin:0">${esc(what(r))}</div></td><td class="mute" style="font-size:12px">${esc(r.username)}</td></tr>`).join('')}</table>` : '<div class="hint">No changes recorded yet.</div>');
+});
+
+
+// ---------- chart view ----------
+function setView(v, quiet){
+  S.view = v; store.set('alk_loc_view', v);
+  document.body.classList.toggle('chart', v === 'chart');
+  $('vChart').classList.toggle('on', v === 'chart'); $('vList').classList.toggle('on', v !== 'chart');
+  if (!quiet) { renderTree(); renderChart(); }
+}
+function saveCopen(){ store.set('alk_loc_copen', JSON.stringify([...S.copen])); }
+function zoom(d){ S.zoom = Math.min(1.4, Math.max(0.4, +(S.zoom + d).toFixed(2))); store.set('alk_loc_zoom', S.zoom); $('oc').style.zoom = S.zoom; }
+function chartLevels(depth){
+  const site = S.byId.get(S.site); if (!site) return;
+  S.copen = new Set([...S.copen].filter(id => !S.byId.get(id)?.path_ids.includes(site.id)));
+  (function walk(n, d){ if (d < depth && n.kids.length) { S.copen.add(n.id); n.kids.forEach(k => walk(k, d+1)); } })(site, 0);
+  saveCopen(); renderChart();
+}
+// Suggest the next name/code from the last sibling: Floor 7 → Floor 8, Flat 504 → Flat 505, Tower B → Tower C
+function bumpLast(s){
+  if (!s) return '';
+  let m = s.match(/^(.*?)(\d+)(\D*)$/);
+  if (m) { const n = String(+m[2] + 1).padStart(m[2].length, '0'); return m[1] + n + m[3]; }
+  m = s.match(/^(.*?)([A-Y])$/);
+  if (m) return m[1] + String.fromCharCode(m[2].charCodeAt(0) + 1);
+  return '';
+}
+function suggestNext(parentId){
+  const p = S.byId.get(parentId); const last = p?.kids[p.kids.length - 1];
+  const type = guessChildType(parentId);
+  if (last) return { type: last.type, name: bumpLast(last.name), code: bumpLast(last.code) };
+  const num = (p?.code.match(/(\d+)\D*$/) || p?.name.match(/(\d+)\D*$/) || [])[1];
+  const first = { block:['Tower A','TA'], floor:['Floor 1','F01'], flat:[num ? `Flat ${num}01` : 'Flat 101', num ? `${num}01` : '101'], room:['Living',''], plot:['Plot 1','P001'], area:['',''] }[type] || ['',''];
+  return { type, name: first[0], code: first[1] };
+}
+function renderChart(){
+  if (S.view !== 'chart' || !S.user) return;
+  const sites = roots();
+  if (!S.site || !S.byId.has(S.site)) S.site = sites[0]?.id ?? null;
+  if (S.copenFresh && S.site) { S.copenFresh = false; chartLevels(2); return; }
+  $('siteChips').innerHTML = sites.map(s => `<button class="sitechip${s.id===S.site?' on':''}" onclick="S.site=${s.id};renderChart()">${esc(s.name)}</button>`).join('');
+  const site = S.byId.get(S.site);
+  $('oc').style.zoom = S.zoom;
+  if (!site) { $('oc').innerHTML = `<div class="empty" style="height:auto;padding:60px 0">No sites yet.${S.user.can_edit?'<br><br><button class="btn pri" onclick="openAdd(null)">+ Add first site</button>':''}</div>`; return; }
+  const ed = S.user.can_edit;
+  const card = (n, isRoot) => {
+    const t = typeOf(n.type), open = S.copen.has(n.id), nk = n.kids.length;
+    const same = nk && n.kids.every(k => k.type === n.kids[0].type);
+    const kidLabel = !nk ? '' : same ? `${nk} ${esc((typeOf(n.kids[0].type).label.split(' /')[0]).toLowerCase())}${nk>1?'s':''}` : `${nk} inside`;
+    return `<div class="cn${isRoot?' root':''}${S.sel===n.id?' sel':''}${n.effective_active?'':' off'}" data-id="${n.id}" ${ed && !isRoot?'draggable="true"':''}
+        onclick="pick(${n.id})" ondblclick="event.stopPropagation();renameInline(${n.id})">
+      <div class="ct" style="color:${esc(t.color)}">${esc(t.label.split(' /')[0])}</div>
+      <div class="cnm" title="${esc(n.path_name)}">${esc(n.name)}</div>${n.code?`<div class="ccd">${esc(n.code)}</div>`:''}
+      ${(nk || ed) ? `<div class="cf">${nk?`<button class="cbtn" onclick="event.stopPropagation();ctog(${n.id})">${open?'▾':'▸'} ${kidLabel}</button>`:''}<span class="sp"></span>
+        ${ed?`<button class="cbtn add" title="Add inside ${esc(n.name)}" onclick="event.stopPropagation();startAdd(${n.id})">+</button>`:''}</div>`:''}
+    </div>`;
+  };
+  const addCard = pid => {
+    const sg = S.addDraft || suggestNext(pid);
+    return `<li><div class="addcard" onclick="event.stopPropagation()">
+      <select id="ac_type">${typeOpts(sg.type)}</select>
+      <input id="ac_name" placeholder="Name" value="${esc(sg.name)}" onkeydown="acKey(event,${pid})">
+      <div class="row"><input id="ac_code" placeholder="Code" value="${esc(sg.code)}" onkeydown="acKey(event,${pid})"><button class="btn sm pri" style="margin-top:5px" onclick="saveAdd(${pid})">Add</button></div>
+      <div class="hint">Enter adds and keeps going · Esc to stop</div></div></li>`;
+  };
+  const walk = (n, isRoot) => {
+    const showKids = S.copen.has(n.id) && n.kids.length;
+    const adding = S.adding === n.id;
+    const inner = (showKids ? n.kids.map(k => walk(k, false)).join('') : '') + (adding ? addCard(n.id) : '');
+    return `<li>${card(n, isRoot)}${inner ? `<ul>${inner}</ul>` : ''}</li>`;
+  };
+  $('oc').innerHTML = `<ul>${walk(site, true)}</ul>`;
+  if (S.adding) { const i = $('ac_name'); if (i) { i.focus(); i.select(); } }
+  if (ed) wireDrag();
+}
+function ctog(id){ S.copen.has(id) ? S.copen.delete(id) : S.copen.add(id); saveCopen(); renderChart(); }
+function startAdd(pid){ S.adding = pid; S.addDraft = null; S.copen.add(pid); saveCopen(); renderChart(); }
+function acKey(e, pid){ if (e.key === 'Enter') { e.preventDefault(); saveAdd(pid); } if (e.key === 'Escape') { S.adding = null; renderChart(); } }
+const saveAdd = run(async pid => {
+  const body = { parent_id: pid, type: $('ac_type').value, name: $('ac_name').value, code: $('ac_code').value };
+  if (!body.name.trim()) return toast('Type a name first', true);
+  await api('/api/locations', { method:'POST', body });
+  S.addDraft = null; await load();          // keeps the add box open with the next name suggested
+  toast('Added ' + body.name);
+});
+function renameInline(id){
+  if (!S.user.can_edit) return;
+  const el = document.querySelector(`.cn[data-id="${id}"] .cnm`); if (!el) return;
+  const n = S.byId.get(id);
+  el.innerHTML = `<input class="ren" value="${esc(n.name)}">`;
+  const i = el.querySelector('input'); i.focus(); i.select();
+  i.onclick = e => e.stopPropagation();
+  let done = false;
+  const finish = run(async save => {
+    if (done) return; done = true;
+    if (save && i.value.trim() && i.value.trim() !== n.name) { await api('/api/locations/'+id, { method:'PATCH', body:{ name: i.value } }); toast('Renamed'); await load(); }
+    else renderChart();
+  });
+  i.onkeydown = e => { if (e.key === 'Enter') finish(true); if (e.key === 'Escape') finish(false); };
+  i.onblur = () => finish(true);
+}
+function wireDrag(){
+  document.querySelectorAll('#oc .cn').forEach(el => {
+    const id = +el.dataset.id;
+    el.addEventListener('dragstart', e => { S.drag = id; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', String(id)); } catch {} });
+    el.addEventListener('dragend', () => { S.drag = null; document.querySelectorAll('.cn').forEach(c => c.classList.remove('dragging','drop-in','drop-before','drop-after')); });
+    el.addEventListener('dragover', e => {
+      if (!S.drag || S.drag === id) return;
+      const tgt = S.byId.get(id);
+      if (tgt.path_ids.includes(S.drag)) return;           // can't drop inside itself
+      e.preventDefault();
+      const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width;
+      const zone = el.classList.contains('root') ? 'in' : x < 0.25 ? 'before' : x > 0.75 ? 'after' : 'in';
+      el.classList.toggle('drop-in', zone === 'in'); el.classList.toggle('drop-before', zone === 'before'); el.classList.toggle('drop-after', zone === 'after');
+      el.dataset.zone = zone;
+    });
+    el.addEventListener('dragleave', () => el.classList.remove('drop-in','drop-before','drop-after'));
+    el.addEventListener('drop', e => { e.preventDefault(); const d = S.drag; S.drag = null; if (d) dropOn(d, id, el.dataset.zone || 'in'); });
+  });
+}
+const dropOn = run(async (dragId, targetId, zone) => {
+  const drag = S.byId.get(dragId), tgt = S.byId.get(targetId);
+  if (zone === 'in') {
+    if (drag.parent_id === targetId) return;
+    await api(`/api/locations/${dragId}/move`, { method:'POST', body:{ parent_id: targetId } });
+    S.copen.add(targetId); saveCopen();
+    toast(`Moved ${drag.name} into ${tgt.name}`);
+  } else {
+    const pid = tgt.parent_id;
+    if (drag.parent_id !== pid) await api(`/api/locations/${dragId}/move`, { method:'POST', body:{ parent_id: pid } });
+    const ids = S.byId.get(pid).kids.map(k => k.id).filter(x => x !== dragId);
+    ids.splice(ids.indexOf(targetId) + (zone === 'after' ? 1 : 0), 0, dragId);
+    await api('/api/locations/reorder', { method:'POST', body:{ ids } });
+    toast(`Placed ${drag.name} ${zone} ${tgt.name}`);
+  }
+  await load();
 });
 
 boot();
