@@ -235,7 +235,7 @@ async function boot(){
   document.querySelectorAll('.adminOnly').forEach(el=>el.classList.toggle('hide', !S.user.is_admin));
   try { S.open = new Set(JSON.parse(store.get('alk_loc_open')||'[]')); } catch {}
   try { const c = JSON.parse(store.get('alk_loc_copen')||'null'); if (c) S.copen = new Set(c); else S.copenFresh = true; } catch { S.copenFresh = true; }
-  S.view = store.get('alk_loc_view') || 'chart'; S.zoom = +(store.get('alk_loc_zoom')||1) || 1;
+  S.view = store.get('alk_loc_view') || 'chart'; S.zoom = +(store.get('alk_loc_zoom') || (innerWidth < 820 ? 0.8 : 1)) || 1;
   setView(S.view, true);
   await load();
 }
@@ -596,8 +596,17 @@ function renderChart(){
     return `<li>${card(n, isRoot)}${inner ? `<ul>${inner}</ul>` : ''}</li>`;
   };
   $('oc').innerHTML = `<ul>${walk(site, true)}</ul>`;
-  if (S.adding) { const i = $('ac_name'); if (i) { i.focus(); i.select(); } }
   if (ed) wireDrag();
+  if (S.adding) { const i = $('ac_name'); if (i) { i.focus({ preventScroll: true }); i.select(); keepVisible(i.closest('.addcard')); } }
+  else if (S.lastCentered !== S.site) { S.lastCentered = S.site; keepVisible(document.querySelector('#oc .cn.root'), true); }
+  else if (S.sel) keepVisible(document.querySelector(`#oc .cn[data-id="${S.sel}"]`));
+}
+// Scroll the chart so a box is in view (centred horizontally when asked or when it's off-screen)
+function keepVisible(el, center){
+  if (!el) return;
+  const w = $('chartWrap'), wr = w.getBoundingClientRect(), r = el.getBoundingClientRect();
+  if (center || r.left < wr.left || r.right > wr.right) w.scrollLeft += (r.left + r.width/2) - (wr.left + wr.width/2);
+  if (r.bottom > wr.bottom - 20) w.scrollTop += r.bottom - wr.bottom + 60;
 }
 function ctog(id){ S.copen.has(id) ? S.copen.delete(id) : S.copen.add(id); saveCopen(); renderChart(); }
 function startAdd(pid){ S.adding = pid; S.addDraft = null; S.copen.add(pid); saveCopen(); renderChart(); }
