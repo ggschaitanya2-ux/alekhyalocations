@@ -1,6 +1,31 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script>
+/* Alekhya Hub hand-off: accept #hub_token=… and show a ⌂ Hub button */
+(function () {
+  var KEY = 'alk_loc_token';                                   // ← this app's token key (table above)
+  var HUB = 'https://hub.150-241-247-25.sslip.io/';
+  try {
+    var m = location.hash.match(/[#&]hub_token=([^&]+)/);
+    if (m) {
+      localStorage.setItem(KEY, decodeURIComponent(m[1]));
+      sessionStorage.setItem('from_hub', '1');
+      history.replaceState(null, '', location.pathname + location.search);
+    }
+    if (sessionStorage.getItem('from_hub')) {
+      document.addEventListener('DOMContentLoaded', function () {
+        var a = document.createElement('a');
+        a.href = HUB; a.textContent = '⌂ Hub';
+        a.style.cssText = 'position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:99999;' +
+          'background:#1c1917;color:#f59e0b;font:600 13px system-ui,sans-serif;padding:8px 12px;border-radius:999px;' +
+          'text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.3);opacity:.92';
+        document.body.appendChild(a);
+      });
+    }
+  } catch (e) {}
+})();
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Alekhya Locations</title>
